@@ -1,0 +1,6 @@
+node_modules/
+dist/
+extension/
+INSTALL.txt
+.DS_Store
+*.log

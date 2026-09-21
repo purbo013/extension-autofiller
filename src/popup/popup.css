@@ -1,0 +1,153 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.container {
+  width: 340px;
+  padding: 16px;
+}
+
+.header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #052e16;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.header p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.actions {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background: #22c55e;
+  color: #052e16;
+}
+
+.btn-secondary {
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+}
+
+.status {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.status.error {
+  color: #fca5a5;
+}
+
+.status.success {
+  color: #86efac;
+}
+
+.shortcut {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+kbd {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 11px;
+}
+
+.profile {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.profile.hidden {
+  display: none;
+}
+
+.profile h2 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.profile dl {
+  margin: 0;
+}
+
+.profile dl > div {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #1f2937;
+}
+
+.profile dl > div:last-child {
+  border-bottom: none;
+}
+
+.profile dt {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.profile dd {
+  margin: 0;
+  font-size: 12px;
+  word-break: break-word;
+}

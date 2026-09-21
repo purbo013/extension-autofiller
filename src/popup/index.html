@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form Autofiller ID</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <div class="logo">FA</div>
+        <div>
+          <h1>Form Autofiller ID</h1>
+          <p>Data fake Indonesia yang realistis</p>
+        </div>
+      </header>
+
+      <section class="actions">
+        <button id="fillBtn" class="btn btn-primary" type="button">Isi Form</button>
+        <button id="generateBtn" class="btn btn-secondary" type="button">Generate Ulang</button>
+      </section>
+
+      <p id="status" class="status">Siap mengisi form di halaman ini.</p>
+      <p class="shortcut">Shortcut: <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd></p>
+
+      <section id="profilePreview" class="profile hidden">
+        <h2>Profil Terakhir</h2>
+        <dl>
+          <div><dt>Nama</dt><dd id="previewName">-</dd></div>
+          <div><dt>Email</dt><dd id="previewEmail">-</dd></div>
+          <div><dt>Telepon</dt><dd id="previewPhone">-</dd></div>
+          <div><dt>Kota</dt><dd id="previewCity">-</dd></div>
+          <div><dt>NIK</dt><dd id="previewNik">-</dd></div>
+        </dl>
+      </section>
+    </main>
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>
