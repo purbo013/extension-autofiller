@@ -12,10 +12,10 @@ npm run build
 Lalu di Chrome/Opera, **Load unpacked** dan pilih folder:
 
 ```
-F:\www\extension-autofiller\extension
+extension/
 ```
 
-> **PENTING:** Jangan load folder `extension-autofiller` (root).  
+> **PENTING:** Jangan load folder root proyek.  
 > Load subfolder **`extension`** yang berisi `manifest.json` hasil build.
 
 ## Fitur
