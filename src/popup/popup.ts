@@ -20,6 +20,7 @@ const previewEmail = document.getElementById("previewEmail") as HTMLElement;
 const previewPhone = document.getElementById("previewPhone") as HTMLElement;
 const previewCity = document.getElementById("previewCity") as HTMLElement;
 const previewNik = document.getElementById("previewNik") as HTMLElement;
+const footerVersion = document.getElementById("footerVersion") as HTMLElement;
 
 function setStatus(message: string, type: "default" | "success" | "error" = "default"): void {
   statusEl.textContent = message;
@@ -96,5 +97,7 @@ fillBtn.addEventListener("click", () => {
 generateBtn.addEventListener("click", () => {
   void generateProfileOnly();
 });
+
+footerVersion.textContent = `v${chrome.runtime.getManifest().version}`;
 
 void loadStoredProfile();

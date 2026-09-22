@@ -166,6 +166,8 @@ function getGenericValue(field: DetectedField, profile: IndonesianProfile): stri
   const attrs = normalizeText(field.signals.slice(0, 6).join(" "));
   const context = `${attrs} ${label}`;
 
+  if (/\b(latitude|lintang)\b/.test(context) || /\blat\b/.test(context)) return profile.latitude;
+  if (/\b(longitude|bujur)\b/.test(context) || /\b(lng|lon)\b/.test(context)) return profile.longitude;
   if (/\b(no[.\s]?kk|kartu keluarga|nokk)\b/.test(context)) {
     return profile.familyCardNumber;
   }
@@ -188,6 +190,23 @@ function isNumericOnly(value: string): boolean {
   return /^\d+$/.test(value.trim());
 }
 
+function isCoordinateField(field: DetectedField): boolean {
+  const context = normalizeText(field.signals.join(" "));
+  return (
+    field.fieldType === "latitude" ||
+    field.fieldType === "longitude" ||
+    /\b(latitude|longitude|lintang|bujur)\b/.test(context) ||
+    /\b(lat|lng|lon)\b/.test(context)
+  );
+}
+
+function ensure16Digits(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length === 16) return digits;
+  if (digits.length > 16) return digits.slice(0, 16);
+  return digits.padStart(16, "0");
+}
+
 function resolveFieldValue(field: DetectedField, profile: IndonesianProfile): string {
   let value = getProfileValue(field.fieldType, profile);
 
@@ -205,6 +224,10 @@ function resolveFieldValue(field: DetectedField, profile: IndonesianProfile): st
 
   if (field.fieldType === "familyCardNumber" && value === profile.nik) {
     value = profile.familyCardNumber;
+  }
+
+  if ((field.fieldType === "nik" || field.fieldType === "familyCardNumber") && !isCoordinateField(field)) {
+    value = ensure16Digits(value);
   }
 
   return value;

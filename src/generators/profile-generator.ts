@@ -25,6 +25,7 @@ import { ALL_CITIES, LOCATIONS } from "../data/id/locations";
 import { FEMALE_FIRST_NAMES, LAST_NAMES, MALE_FIRST_NAMES } from "../data/id/names";
 import {
   generateBankAccount,
+  generateCoordinates,
   generateFamilyCardNumber,
   generateNik,
   generateNpwp,
@@ -92,6 +93,7 @@ export function generateProfile(): IndonesianProfile {
   const birthPlace = randomPick(ALL_CITIES);
   const address = generateAddress();
   const phoneData = generatePhone();
+  const coordinates = generateCoordinates(address.city);
 
   const profile: IndonesianProfile = {
     firstName,
@@ -106,6 +108,7 @@ export function generateProfile(): IndonesianProfile {
     nik: generateNik({
       province: address.province,
       city: address.city,
+      kecamatan: address.kecamatan,
       birthDate,
       gender,
     }),
@@ -138,6 +141,8 @@ export function generateProfile(): IndonesianProfile {
       stunting: randomPick(YES_NO_OPTIONS),
     },
     decile: randomPick(DECILE_OPTIONS),
+    latitude: coordinates.latitude,
+    longitude: coordinates.longitude,
   };
 
   return profile;

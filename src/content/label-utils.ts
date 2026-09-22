@@ -142,6 +142,10 @@ export function inferFieldTypeFromAttributes(element: HTMLElement): FieldType | 
   const attrs = parts.join(" ");
   if (!attrs) return null;
 
+  if (/\b(latitude|lintang)\b/.test(attrs) || attrs === "lat" || /\blat\b/.test(attrs)) return "latitude";
+  if (/\b(longitude|bujur)\b/.test(attrs) || attrs === "lng" || attrs === "lon" || /\b(lng|lon)\b/.test(attrs)) {
+    return "longitude";
+  }
   if (/\b(no[_\s.\-]?kk|nokk|kartu[_\s]?keluarga)\b/.test(attrs)) return "familyCardNumber";
   if (/\b(no[_\s.\-]?nik|nik)\b/.test(attrs) && !/\bnokk\b/.test(attrs)) return "nik";
   if (/\b(nama[_\s]?(kepala|lengkap|depan|belakang)?|fullname|full[_\s]?name)\b/.test(attrs)) {
@@ -164,6 +168,8 @@ export function inferFieldTypeFromLabel(label: string | null): FieldType | null 
   if (!label) return null;
 
   const text = normalizeText(label);
+  if (/\b(latitude|lintang)\b/.test(text) || text === "lat") return "latitude";
+  if (/\b(longitude|bujur)\b/.test(text) || text === "lng" || text === "lon") return "longitude";
   if (/\b(no[.\s]?kk|kartu keluarga)\b/.test(text)) return "familyCardNumber";
   if (text === "nik" || /\bnomor nik\b/.test(text)) return "nik";
   if (/\bnama kepala\b/.test(text) || /\bnama lengkap\b/.test(text)) return "fullName";

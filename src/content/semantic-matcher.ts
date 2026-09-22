@@ -54,6 +54,20 @@ const FIELD_RULES: FieldRule[] = [
     weight: 5,
   },
   {
+    type: "latitude",
+    keywords: ["latitude", "lintang", "koordinat lat", "coord lat", "lat"],
+    autocomplete: [],
+    inputTypes: ["text", "number"],
+    weight: 12,
+  },
+  {
+    type: "longitude",
+    keywords: ["longitude", "bujur", "koordinat lng", "coord lng", "lng", "lon"],
+    autocomplete: [],
+    inputTypes: ["text", "number"],
+    weight: 12,
+  },
+  {
     type: "nik",
     keywords: ["nik", "nomor induk kependudukan", "no nik", "no_nik", "ktp"],
     autocomplete: [],
@@ -373,6 +387,21 @@ function scoreRule(rule: FieldRule, signals: string[], element: HTMLElement): nu
     score += 6;
   }
 
+  if (
+    (rule.type === "nik" || rule.type === "familyCardNumber") &&
+    /\b(latitude|longitude|lintang|bujur|lat|lng|lon)\b/.test(normalizedSignals)
+  ) {
+    return 0;
+  }
+
+  if (rule.type === "latitude" && /\b(latitude|lintang)\b/.test(normalizedSignals)) {
+    score += 4;
+  }
+
+  if (rule.type === "longitude" && /\b(longitude|bujur)\b/.test(normalizedSignals)) {
+    score += 4;
+  }
+
   if (rule.type === "nik" && normalizedSignals.includes("nik") && !normalizedSignals.includes("nokk")) {
     score += 3;
   }
@@ -507,6 +536,10 @@ export function getProfileValue(fieldType: FieldType, profile: IndonesianProfile
       return profile.yesNo.capilMatch;
     case "stunting":
       return profile.yesNo.stunting;
+    case "latitude":
+      return profile.latitude;
+    case "longitude":
+      return profile.longitude;
     default:
       return "";
   }

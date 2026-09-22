@@ -51,6 +51,8 @@ export interface IndonesianProfile {
     stunting: string;
   };
   decile: string;
+  latitude: string;
+  longitude: string;
 }
 
 export type FieldType =
@@ -96,6 +98,8 @@ export type FieldType =
   | "decile"
   | "capilMatch"
   | "stunting"
+  | "latitude"
+  | "longitude"
   | "genericSelect"
   | "genericText"
   | "genericNumber"
