@@ -4,6 +4,7 @@ import { MESSAGE_ACTIONS } from "../shared/constants";
 import { delay } from "../shared/utils";
 import { countFillableElements, detectCheckboxes, detectFields, detectRadioGroups } from "./field-detector";
 import { fillForm } from "./field-filler";
+import { resolveFillRoot } from "./fill-scope";
 
 let lastProfile: IndonesianProfile | null = null;
 
@@ -11,16 +12,17 @@ async function handleFillForm(): Promise<FillResult> {
   const profile = generateProfile();
   lastProfile = profile;
 
-  const fields = detectFields();
-  const radioGroups = detectRadioGroups();
-  const checkboxes = detectCheckboxes();
-  const total = countFillableElements();
+  const root = resolveFillRoot();
+  const fields = detectFields(root);
+  const radioGroups = detectRadioGroups(root);
+  const checkboxes = detectCheckboxes(root);
+  const total = countFillableElements(root);
 
   let filled = await fillForm(profile, fields, radioGroups, checkboxes);
   await delay(700);
-  filled += await fillForm(profile, detectFields(), detectRadioGroups(), detectCheckboxes(), true);
+  filled += await fillForm(profile, detectFields(root), detectRadioGroups(root), detectCheckboxes(root), true);
   await delay(500);
-  filled += await fillForm(profile, detectFields(), detectRadioGroups(), detectCheckboxes(), true);
+  filled += await fillForm(profile, detectFields(root), detectRadioGroups(root), detectCheckboxes(root), true);
 
   return {
     filled,
