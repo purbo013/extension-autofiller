@@ -123,4 +123,5 @@ export interface FillResult {
   skipped: number;
   total: number;
   profile: IndonesianProfile;
+  wizardSteps?: number;
 }

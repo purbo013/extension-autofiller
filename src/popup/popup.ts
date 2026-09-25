@@ -7,6 +7,7 @@ interface MessageResponse {
   filled?: number;
   skipped?: number;
   total?: number;
+  wizardSteps?: number;
   profile?: IndonesianProfile;
   error?: string;
 }
@@ -48,8 +49,10 @@ async function fillForm(): Promise<void> {
     }
 
     renderProfile(response.profile);
+    const wizardNote =
+      (response.wizardSteps ?? 0) > 0 ? `, ${response.wizardSteps} langkah form dilanjutkan` : "";
     setStatus(
-      `${response.filled ?? 0} dari ${response.total ?? response.filled ?? 0} field terisi${(response.skipped ?? 0) > 0 ? `, ${response.skipped} dilewati` : ""}.`,
+      `${response.filled ?? 0} dari ${response.total ?? response.filled ?? 0} field terisi${(response.skipped ?? 0) > 0 ? `, ${response.skipped} dilewati` : ""}${wizardNote}.`,
       "success",
     );
     await chrome.storage.local.set({ lastProfile: response.profile });
