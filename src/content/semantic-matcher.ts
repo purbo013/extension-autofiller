@@ -356,6 +356,15 @@ function getInputType(element: HTMLElement): string {
   return element.tagName.toLowerCase();
 }
 
+function inputTypeMatchesRule(inputType: string, ruleInputTypes: string[]): boolean {
+  if (ruleInputTypes.includes(inputType)) return true;
+  if (inputType === "textarea" && ruleInputTypes.includes("text")) return true;
+  if (inputType === "select" && ruleInputTypes.some((type) => type === "select" || type === "select-one")) {
+    return true;
+  }
+  return false;
+}
+
 function scoreRule(rule: FieldRule, signals: string[], element: HTMLElement): number {
   let score = 0;
   const normalizedSignals = normalizeText(signals.join(" "));
@@ -412,6 +421,10 @@ function scoreRule(rule: FieldRule, signals: string[], element: HTMLElement): nu
 
   if (rule.type === "birthDate" && !normalizedSignals.includes("lahir") && !normalizedSignals.includes("birth") && !normalizedSignals.includes("dob")) {
     score = Math.min(score, 1);
+  }
+
+  if (score > 0 && !inputTypeMatchesRule(inputType, rule.inputTypes)) {
+    return 0;
   }
 
   return score;

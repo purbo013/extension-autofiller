@@ -73,6 +73,19 @@ function shouldFormatAsDate(fieldType: FieldType, element: HTMLInputElement, val
   return ISO_DATE_PATTERN.test(value);
 }
 
+function canAcceptValueOnInput(element: HTMLInputElement, value: string, fieldType: FieldType): boolean {
+  if (element.type === "number" || element.type === "range") {
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+    const parsed = Number(trimmed);
+    return !Number.isNaN(parsed) && Number.isFinite(parsed);
+  }
+  if (element.type === "date") {
+    return ISO_DATE_PATTERN.test(value) || shouldFormatAsDate(fieldType, element, value);
+  }
+  return true;
+}
+
 function formatDateValue(value: string, element: HTMLInputElement): string {
   const [year, month, day] = value.split("-");
   const context = normalizeText(getFieldContextText(element));
@@ -92,6 +105,10 @@ function fillTextLike(
   fieldType: FieldType,
 ): boolean {
   if (element.value?.trim()) return false;
+
+  if (element instanceof HTMLInputElement && !canAcceptValueOnInput(element, value, fieldType)) {
+    return false;
+  }
 
   let finalValue = value;
   if (element instanceof HTMLInputElement && shouldFormatAsDate(fieldType, element, value)) {
