@@ -74,6 +74,11 @@ body {
   color: #052e16;
 }
 
+.btn-accent {
+  background: #38bdf8;
+  color: #0c4a6e;
+}
+
 .btn-secondary {
   background: #1e293b;
   color: #e2e8f0;

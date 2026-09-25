@@ -1,5 +1,7 @@
 import { isVisible } from "../shared/utils";
 
+export type FillScopeMode = "auto" | "modal" | "module";
+
 const MODAL_SELECTORS = [
   "dialog[open]",
   "[role='dialog']",
@@ -17,12 +19,20 @@ const MODAL_SELECTORS = [
 
 const FORM_WRAPPER_SELECTORS = "fieldset, [role='form'], .form-section, .form-container, .ant-form";
 
+const MODULE_SHELL_SELECTORS =
+  "main, [role='main'], .module, .content-wrapper, .page-content, .card-body, article";
+
 function isFormControl(element: Element): boolean {
   return (
     element instanceof HTMLInputElement ||
     element instanceof HTMLTextAreaElement ||
     element instanceof HTMLSelectElement
   );
+}
+
+function isMultiselectHost(element: Element): boolean {
+  if (!(element instanceof HTMLElement)) return false;
+  return element.tagName.toLowerCase() === "multiselect" || element.classList.contains("multiselect");
 }
 
 function isInHiddenTree(element: HTMLElement): boolean {
@@ -70,15 +80,32 @@ function findTopmostModal(): HTMLElement | null {
   });
 }
 
-function getContainerFromElement(element: HTMLElement): HTMLElement | null {
+function isInsideActiveModal(element: HTMLElement): boolean {
   const modal = element.closest<HTMLElement>(MODAL_SELECTORS);
-  if (modal && isActiveModal(modal)) return modal;
+  if (!modal) return false;
+  return isActiveModal(modal);
+}
 
+function getModuleContainerFromElement(element: HTMLElement): HTMLElement | null {
   const form = element.closest<HTMLFormElement>("form");
-  if (form && isVisible(form) && !isInHiddenTree(form)) return form;
+  if (form && isVisible(form) && !isInHiddenTree(form) && !isInsideActiveModal(form)) {
+    return form;
+  }
 
   const wrapper = element.closest<HTMLElement>(FORM_WRAPPER_SELECTORS);
-  if (wrapper && isVisible(wrapper) && !isInHiddenTree(wrapper)) return wrapper;
+  if (wrapper && isVisible(wrapper) && !isInHiddenTree(wrapper) && !isInsideActiveModal(wrapper)) {
+    return wrapper;
+  }
+
+  const moduleShell = element.closest<HTMLElement>(MODULE_SHELL_SELECTORS);
+  if (
+    moduleShell &&
+    isVisible(moduleShell) &&
+    !isInHiddenTree(moduleShell) &&
+    !isInsideActiveModal(moduleShell)
+  ) {
+    return moduleShell;
+  }
 
   return null;
 }
@@ -89,24 +116,59 @@ function getVisibleForms(): HTMLFormElement[] {
   );
 }
 
-export function resolveFillRoot(): ParentNode {
+function getVisibleFormsOutsideModal(): HTMLFormElement[] {
+  return getVisibleForms().filter((form) => !isInsideActiveModal(form));
+}
+
+function resolveFromFocusedField(mode: FillScopeMode): ParentNode | null {
   const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || active === document.body || active === document.documentElement) {
+    return null;
+  }
+
+  const isFieldTarget =
+    isFormControl(active) ||
+    active.isContentEditable ||
+    isMultiselectHost(active) ||
+    Boolean(active.closest("multiselect, .multiselect"));
+
+  if (!isFieldTarget) return null;
+
+  if (mode === "modal") {
+    const modal = active.closest<HTMLElement>(MODAL_SELECTORS);
+    if (modal && isActiveModal(modal)) return modal;
+    return null;
+  }
+
+  return getModuleContainerFromElement(active);
+}
+
+export function resolveFillRoot(mode: FillScopeMode = "auto"): ParentNode {
   const modal = findTopmostModal();
 
-  if (modal) {
+  if (mode === "modal") {
+    if (modal) return modal;
+    const focusedModal = resolveFromFocusedField("modal");
+    if (focusedModal) return focusedModal;
+    throw new Error("Tidak ada modal aktif. Buka dialog/popup form dulu, lalu klik Isi Form Modal.");
+  }
+
+  if (mode === "auto" && modal) {
     return modal;
   }
 
-  if (active instanceof HTMLElement && active !== document.body && active !== document.documentElement) {
-    if (isFormControl(active) || active.isContentEditable) {
-      const container = getContainerFromElement(active);
-      if (container) return container;
-    }
+  const focusedModule = resolveFromFocusedField(mode === "module" ? "module" : "module");
+  if (focusedModule) return focusedModule;
+
+  const forms = getVisibleFormsOutsideModal();
+  if (forms.length === 1) {
+    return forms[0];
   }
 
-  const visibleForms = getVisibleForms();
-  if (visibleForms.length === 1) {
-    return visibleForms[0];
+  if (mode === "module") {
+    throw new Error(
+      "Tidak ada form modul yang jelas. Klik field di halaman utama (bukan di modal), lalu coba Isi Form Modul.",
+    );
   }
 
   throw new Error(

@@ -6,6 +6,7 @@ import {
   inferFieldTypeFromAttributes,
   inferFieldTypeFromLabel,
 } from "./label-utils";
+import { getPlanningFieldValue } from "./planning-values";
 
 interface FieldRule {
   type: FieldType;
@@ -145,6 +146,56 @@ const FIELD_RULES: FieldRule[] = [
     weight: 9,
   },
   {
+    type: "location",
+    keywords: [
+      "lokasi",
+      "location",
+      "detail lokasi",
+      "tempat kegiatan",
+      "desa lokasi",
+      "nama desa",
+      "lokasi kegiatan",
+    ],
+    autocomplete: [],
+    inputTypes: ["text", "textarea"],
+    weight: 10,
+  },
+  {
+    type: "activityName",
+    keywords: ["aktivitas", "nama kegiatan", "kegiatan bantuan", "kelompok", "nama kegiatan bantuan"],
+    autocomplete: [],
+    inputTypes: ["text", "textarea"],
+    weight: 11,
+  },
+  {
+    type: "programVision",
+    keywords: ["visi", "vision"],
+    autocomplete: [],
+    inputTypes: ["text", "textarea"],
+    weight: 11,
+  },
+  {
+    type: "programMission",
+    keywords: ["misi", "mission"],
+    autocomplete: [],
+    inputTypes: ["text", "textarea", "select", "select-one"],
+    weight: 11,
+  },
+  {
+    type: "programGoal",
+    keywords: ["tujuan", "goal", "sasaran"],
+    autocomplete: [],
+    inputTypes: ["text", "textarea"],
+    weight: 11,
+  },
+  {
+    type: "programCode",
+    keywords: ["kode", "code", "kode tujuan", "kode program"],
+    autocomplete: [],
+    inputTypes: ["text", "number"],
+    weight: 11,
+  },
+  {
     type: "email",
     keywords: ["email", "e-mail", "surel", "alamat email"],
     autocomplete: ["email"],
@@ -160,10 +211,10 @@ const FIELD_RULES: FieldRule[] = [
   },
   {
     type: "monthlyExpense",
-    keywords: ["pengeluaran", "pengeluaran bulanan", "biaya bulanan", "expense"],
+    keywords: ["pengeluaran", "pengeluaran bulanan", "biaya bulanan", "expense", "nominal", "jumlah bantuan"],
     autocomplete: [],
     inputTypes: ["text", "number"],
-    weight: 8,
+    weight: 9,
   },
   {
     type: "savings",
@@ -309,8 +360,8 @@ const FIELD_RULES: FieldRule[] = [
     type: "occupation",
     keywords: ["pekerjaan", "jabatan", "occupation", "profesi", "job"],
     autocomplete: ["organization-title"],
-    inputTypes: ["text", "select-one", "select"],
-    weight: 6,
+    inputTypes: ["text", "select-one", "select", "textarea"],
+    weight: 9,
   },
   {
     type: "company",
@@ -397,6 +448,47 @@ function scoreRule(rule: FieldRule, signals: string[], element: HTMLElement): nu
 
   if (rule.type === "fullName" && normalizedSignals.includes("nama kepala")) {
     score += 6;
+  }
+
+  if (
+    rule.type === "fullName" &&
+    /\b(aktivitas|lokasi|kegiatan|location|detail lokasi|bantuan|metadata kegiatan)\b/.test(normalizedSignals)
+  ) {
+    return 0;
+  }
+
+  if (rule.type === "occupation" && /\b(aktivitas|kegiatan bantuan|nama kegiatan|kelompok)\b/.test(normalizedSignals)) {
+    return 0;
+  }
+
+  if (
+    (rule.type === "address" || rule.type === "location") &&
+    /\b(tujuan|visi|misi|rpjmd|sasaran)\b/.test(normalizedSignals)
+  ) {
+    return 0;
+  }
+
+  if (
+    (rule.type === "nik" || rule.type === "familyCardNumber") &&
+    /\bkode\b/.test(normalizedSignals) &&
+    !/\b(nik|ktp|kependudukan)\b/.test(normalizedSignals)
+  ) {
+    return 0;
+  }
+
+  if (rule.type === "postalCode" && /\bkode\b/.test(normalizedSignals) && !/\b(kode pos|kodepos|pos)\b/.test(normalizedSignals)) {
+    return 0;
+  }
+
+  if (rule.type === "fullName") {
+    const hasNameHint =
+      /\bnama\b/.test(normalizedSignals) ||
+      normalizedSignals.includes("fullname") ||
+      normalizedSignals.includes("nama lengkap") ||
+      normalizedSignals.includes("nama kepala");
+    if (!hasNameHint) {
+      return 0;
+    }
   }
 
   if (
@@ -506,6 +598,8 @@ export function getProfileValue(fieldType: FieldType, profile: IndonesianProfile
       return profile.address.street;
     case "address":
       return `${profile.address.street}, RT ${profile.address.rt}/RW ${profile.address.rw}, ${profile.address.kelurahan}, ${profile.address.kecamatan}, ${profile.address.city}, ${profile.address.province} ${profile.address.postalCode}`;
+    case "location":
+      return `${profile.address.street}, ${profile.address.kelurahan}, ${profile.address.kecamatan}, ${profile.address.city}, ${profile.address.province}`;
     case "rt":
       return profile.address.rt;
     case "rw":
@@ -516,6 +610,8 @@ export function getProfileValue(fieldType: FieldType, profile: IndonesianProfile
       return profile.religion;
     case "occupation":
       return profile.occupation;
+    case "activityName":
+      return `Kegiatan bantuan ${profile.address.kelurahan}, ${profile.address.kecamatan}`;
     case "company":
       return profile.company;
     case "education":
@@ -560,6 +656,11 @@ export function getProfileValue(fieldType: FieldType, profile: IndonesianProfile
       return profile.latitude;
     case "longitude":
       return profile.longitude;
+    case "programVision":
+    case "programMission":
+    case "programGoal":
+    case "programCode":
+      return getPlanningFieldValue(fieldType, profile);
     default:
       return "";
   }

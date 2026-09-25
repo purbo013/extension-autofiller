@@ -12,7 +12,8 @@ interface MessageResponse {
   error?: string;
 }
 
-const fillBtn = document.getElementById("fillBtn") as HTMLButtonElement;
+const fillModalBtn = document.getElementById("fillModalBtn") as HTMLButtonElement;
+const fillModuleBtn = document.getElementById("fillModuleBtn") as HTMLButtonElement;
 const generateBtn = document.getElementById("generateBtn") as HTMLButtonElement;
 const statusEl = document.getElementById("status") as HTMLParagraphElement;
 const profilePreview = document.getElementById("profilePreview") as HTMLElement;
@@ -22,6 +23,14 @@ const previewPhone = document.getElementById("previewPhone") as HTMLElement;
 const previewCity = document.getElementById("previewCity") as HTMLElement;
 const previewNik = document.getElementById("previewNik") as HTMLElement;
 const footerVersion = document.getElementById("footerVersion") as HTMLElement;
+
+const actionButtons = [fillModalBtn, fillModuleBtn, generateBtn];
+
+function setButtonsDisabled(disabled: boolean): void {
+  for (const button of actionButtons) {
+    button.disabled = disabled;
+  }
+}
 
 function setStatus(message: string, type: "default" | "success" | "error" = "default"): void {
   statusEl.textContent = message;
@@ -37,37 +46,35 @@ function renderProfile(profile: IndonesianProfile): void {
   previewNik.textContent = profile.nik;
 }
 
-async function fillForm(): Promise<void> {
-  fillBtn.disabled = true;
-  generateBtn.disabled = true;
-  setStatus("Mengisi form...");
+function formatFillStatus(response: MessageResponse): string {
+  const wizardNote =
+    (response.wizardSteps ?? 0) > 0 ? `, ${response.wizardSteps} langkah form dilanjutkan` : "";
+  return `${response.filled ?? 0} dari ${response.total ?? response.filled ?? 0} field terisi${(response.skipped ?? 0) > 0 ? `, ${response.skipped} dilewati` : ""}${wizardNote}.`;
+}
+
+async function runFill(action: string, loadingMessage: string): Promise<void> {
+  setButtonsDisabled(true);
+  setStatus(loadingMessage);
 
   try {
-    const response = await sendToActiveTab<MessageResponse>(MESSAGE_ACTIONS.FILL_FORM);
+    const response = await sendToActiveTab<MessageResponse>(action);
     if (!response.success || !response.profile) {
       throw new Error(response.error ?? "Gagal mengisi form.");
     }
 
     renderProfile(response.profile);
-    const wizardNote =
-      (response.wizardSteps ?? 0) > 0 ? `, ${response.wizardSteps} langkah form dilanjutkan` : "";
-    setStatus(
-      `${response.filled ?? 0} dari ${response.total ?? response.filled ?? 0} field terisi${(response.skipped ?? 0) > 0 ? `, ${response.skipped} dilewati` : ""}${wizardNote}.`,
-      "success",
-    );
+    setStatus(formatFillStatus(response), "success");
     await chrome.storage.local.set({ lastProfile: response.profile });
   } catch (error) {
     setStatus((error as Error).message, "error");
   } finally {
-    fillBtn.disabled = false;
-    generateBtn.disabled = false;
+    setButtonsDisabled(false);
   }
 }
 
 async function generateProfileOnly(): Promise<void> {
-  fillBtn.disabled = true;
-  generateBtn.disabled = true;
-  setStatus("Membuat profil baru...");
+  setButtonsDisabled(true);
+  setStatus("Membuat profil acak baru...");
 
   try {
     const response = await sendToActiveTab<MessageResponse>(MESSAGE_ACTIONS.GENERATE_PROFILE);
@@ -76,13 +83,12 @@ async function generateProfileOnly(): Promise<void> {
     }
 
     renderProfile(response.profile);
-    setStatus("Profil baru berhasil dibuat.", "success");
+    setStatus("Data acak baru siap dipakai.", "success");
     await chrome.storage.local.set({ lastProfile: response.profile });
   } catch (error) {
     setStatus((error as Error).message, "error");
   } finally {
-    fillBtn.disabled = false;
-    generateBtn.disabled = false;
+    setButtonsDisabled(false);
   }
 }
 
@@ -93,8 +99,12 @@ async function loadStoredProfile(): Promise<void> {
   }
 }
 
-fillBtn.addEventListener("click", () => {
-  void fillForm();
+fillModalBtn.addEventListener("click", () => {
+  void runFill(MESSAGE_ACTIONS.FILL_FORM_MODAL, "Mengisi form di modal...");
+});
+
+fillModuleBtn.addEventListener("click", () => {
+  void runFill(MESSAGE_ACTIONS.FILL_FORM_MODULE, "Mengisi form modul di halaman...");
 });
 
 generateBtn.addEventListener("click", () => {

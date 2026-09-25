@@ -1,7 +1,8 @@
 import type { FieldType } from "../generators/types";
 import { normalizeText } from "../shared/utils";
 
-const LABEL_SELECTOR = "label, legend, .label, .form-label, .control-label, th";
+const LABEL_SELECTOR =
+  "label, legend, .label, .form-label, .control-label, th, .v-label, mat-label, [class*='form-label'], .bgi-field-label";
 
 export function getElementSignals(element: HTMLElement): string[] {
   const signals: string[] = [];
@@ -83,10 +84,16 @@ export function findLabelText(element: HTMLElement): string | null {
     }
   }
 
+  const bgiGroup = element.closest(".form-group");
+  if (bgiGroup) {
+    const bgiLabel = bgiGroup.querySelector(".bgi-field-label");
+    if (bgiLabel?.textContent) return bgiLabel.textContent.trim();
+  }
+
   const preceding = findPrecedingLabel(element);
   if (preceding) return preceding;
 
-  const group = element.closest(".form-group, .field, .input-group, .mb-3, .form-field, fieldset");
+  const group = element.closest(".form-group, .field, .input-group, .mb-3, .form-field, fieldset, .bgi-input-wrap");
   if (group) {
     const labels = Array.from(group.querySelectorAll(LABEL_SELECTOR));
     let closestLabel: Element | null = null;
@@ -163,6 +170,24 @@ export function inferFieldTypeFromAttributes(element: HTMLElement): FieldType | 
   if (/\b(email|surel)\b/.test(attrs)) return "email";
   if (/\b(hp|telepon|phone|whatsapp)\b/.test(attrs)) return "phone";
   if (/\bpengeluaran\b/.test(attrs)) return "monthlyExpense";
+  if (
+    /\b(aktivitas|kegiatan bantuan|nama kegiatan|nama kegiatan bantuan|kelompok)\b/.test(attrs) ||
+    /\bkegiatan bantuan\b/.test(attrs)
+  ) {
+    return "activityName";
+  }
+  if (/\b(lokasi|location|detail[_\s]?lokasi|desa lokasi)\b/.test(attrs)) return "location";
+  if (/\b(sumber dana|dana bantuan)\b/.test(attrs)) return "genericSelect";
+  if (/\b(program bantuan|jenis bantuan)\b/.test(attrs)) return "genericSelect";
+  if (/\bopd\b/.test(attrs)) return "genericSelect";
+  if (/\b(nominal|jumlah bantuan)\b/.test(attrs)) return "monthlyExpense";
+  if (/\btahun\b/.test(attrs) && !/\btahun lahir\b/.test(attrs)) return "genericSelect";
+  if (/\bbulan\b/.test(attrs) && !/\bbulan lahir\b/.test(attrs)) return "genericSelect";
+  if (/\bvisi\b/.test(attrs)) return "programVision";
+  if (/\bmisi\b/.test(attrs)) return "programMission";
+  if (/\btujuan\b/.test(attrs)) return "programGoal";
+  if (/\bkode pos\b/.test(attrs) || /\bkodepos\b/.test(attrs)) return "postalCode";
+  if (/\bkode\b/.test(attrs)) return "programCode";
 
   return null;
 }
@@ -175,6 +200,19 @@ export function inferFieldTypeFromLabel(label: string | null): FieldType | null 
   if (/\b(longitude|bujur)\b/.test(text) || text === "lng" || text === "lon") return "longitude";
   if (/\b(no[.\s]?kk|kartu keluarga)\b/.test(text)) return "familyCardNumber";
   if (text === "nik" || /\bnomor nik\b/.test(text)) return "nik";
+  if (/\baktivitas\b/.test(text)) return "activityName";
+  if (/\b(program bantuan|jenis bantuan)\b/.test(text)) return "genericSelect";
+  if (/\b(sumber dana|dana bantuan)\b/.test(text)) return "genericSelect";
+  if (text === "opd" || /\bopd\b/.test(text)) return "genericSelect";
+  if (/\b(nominal|jumlah)\b/.test(text)) return "monthlyExpense";
+  if (text === "tahun" || (/\btahun\b/.test(text) && !/\blahir\b/.test(text))) return "genericSelect";
+  if (text === "bulan" || (/\bbulan\b/.test(text) && !/\blahir\b/.test(text))) return "genericSelect";
+  if (/\b(lokasi|location|detail lokasi)\b/.test(text)) return "location";
+  if (/\bvisi\b/.test(text)) return "programVision";
+  if (/\bmisi\b/.test(text)) return "programMission";
+  if (/\btujuan\b/.test(text)) return "programGoal";
+  if (/\bkode pos\b/.test(text) || /\bkodepos\b/.test(text)) return "postalCode";
+  if (text === "kode" || /\bkode\b/.test(text)) return "programCode";
   if (/\bnama kepala\b/.test(text) || /\bnama lengkap\b/.test(text)) return "fullName";
   if (/\bnama depan\b/.test(text)) return "firstName";
   if (/\bnama belakang\b/.test(text)) return "lastName";

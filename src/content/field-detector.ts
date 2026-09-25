@@ -51,7 +51,7 @@ export function detectFields(root: ParentNode = document): DetectedField[] {
   const detected: DetectedField[] = detectVueMultiselectFields(root);
 
   for (const element of elements) {
-    if (element.closest("multiselect, .multiselect")) continue;
+    if (element.closest("multiselect, .multiselect, .bgi-file-zone, .bgi-detail-search-wrap")) continue;
 
     if (element instanceof HTMLInputElement) {
       if (element.type === "radio" || element.type === "checkbox") continue;

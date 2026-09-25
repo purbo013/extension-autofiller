@@ -4,6 +4,7 @@ import { delay, fuzzyMatch, isVisible, normalizeText, randomInt, randomPick } fr
 import { getFieldContextText } from "./label-utils";
 import { getSelectTargetValues } from "./select-utils";
 import { getProfileValue } from "./semantic-matcher";
+import { getPlanningFieldValue, inferPlanningFieldTypeFromContext, isPlanningFieldType } from "./planning-values";
 import { fillVueMultiselect, isVueMultiselectEmpty, isVueMultiselectHost } from "./vue-multiselect-filler";
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -128,7 +129,10 @@ function fillSelect(element: HTMLSelectElement, value: string, fieldType: FieldT
   }
 
   const targetValues = getSelectTargetValues(fieldType, profile, value);
-  const option = findBestSelectOption(element, targetValues);
+  let option = findBestSelectOption(element, targetValues);
+  if (!option && isPlanningFieldType(fieldType)) {
+    option = randomPick(getValidSelectOptions(element));
+  }
   if (!option) return false;
 
   element.value = option.value;
@@ -184,13 +188,21 @@ function getGenericValue(field: DetectedField, profile: IndonesianProfile): stri
     return profile.familyCardNumber;
   }
   if (/\bnik\b/.test(context) && !/\bnokk\b/.test(context)) return profile.nik;
-  if (/\bnama\b/.test(context)) return profile.fullName;
+  if (/\b(aktivitas|kegiatan bantuan|nama kegiatan|kelompok)\b/.test(context)) {
+    return `Kegiatan bantuan ${profile.address.kelurahan}, ${profile.address.kecamatan}`;
+  }
+  if (/\b(lokasi|location|detail lokasi|desa lokasi|nama desa)\b/.test(context)) {
+    return `${profile.address.kelurahan}, ${profile.address.kecamatan}, ${profile.address.city}`;
+  }
+  if (/\bnama\b/.test(context) && !/\b(aktivitas|lokasi|kegiatan)\b/.test(context)) return profile.fullName;
   if (context.includes("alamat")) {
     return `${profile.address.street}, RT ${profile.address.rt}/RW ${profile.address.rw}`;
   }
   if (context.includes("pengeluaran")) return profile.monthlyExpense;
   if (context.includes("aset")) return profile.assets;
   if (context.includes("sarana") || context.includes("prasarana")) return profile.facilities;
+  const planningType = inferPlanningFieldTypeFromContext(context);
+  if (planningType) return getPlanningFieldValue(planningType, profile);
   if (field.fieldType === "genericNumber" || (field.element instanceof HTMLInputElement && field.element.type === "number")) {
     return String(randomInt(100_000, 5_000_000));
   }
@@ -238,8 +250,19 @@ function resolveFieldValue(field: DetectedField, profile: IndonesianProfile): st
     value = profile.familyCardNumber;
   }
 
-  if ((field.fieldType === "nik" || field.fieldType === "familyCardNumber") && !isCoordinateField(field)) {
+  if (
+    (field.fieldType === "nik" || field.fieldType === "familyCardNumber") &&
+    !isCoordinateField(field) &&
+    !isPlanningFieldType(field.fieldType)
+  ) {
     value = ensure16Digits(value);
+  }
+
+  if (field.fieldType === "location") {
+    const context = normalizeText(field.signals.join(" "));
+    if (/\b(desa|lokasi kegiatan|nama desa)\b/.test(context)) {
+      value = `${profile.address.kelurahan}, ${profile.address.kecamatan}, ${profile.address.city}`;
+    }
   }
 
   return value;

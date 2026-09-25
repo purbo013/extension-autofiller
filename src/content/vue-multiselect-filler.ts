@@ -1,6 +1,7 @@
 import type { FieldType, IndonesianProfile } from "../generators/types";
 import { FIELD_FILL_DELAY_MS } from "../shared/constants";
 import { delay, fuzzyMatch, isVisible, normalizeText, randomPick } from "../shared/utils";
+import { isPlanningFieldType } from "./planning-values";
 import { getSelectTargetValues } from "./select-utils";
 
 const OPTION_SELECTOR = ".multiselect__option:not(.multiselect__option--disabled)";
@@ -28,7 +29,9 @@ function isDisabled(fillRoot: HTMLElement): boolean {
 function isPlaceholderText(text: string): boolean {
   const normalized = normalizeText(text);
   if (!normalized || normalized === "-") return true;
-  return ["pilih", "select", "choose", "--", "none"].some((token) => normalized.startsWith(token));
+  return ["pilih", "select", "choose", "--", "none", "select option"].some((token) =>
+    normalized.startsWith(token) || normalized === token,
+  );
 }
 
 export function isVueMultiselectEmpty(host: HTMLElement): boolean {
@@ -72,7 +75,11 @@ function collectOptions(fillRoot: HTMLElement): HTMLElement[] {
   return Array.from(active.querySelectorAll<HTMLElement>(OPTION_SELECTOR)).filter((el) => isVisible(el));
 }
 
-function findBestOption(options: HTMLElement[], targetValues: string[]): HTMLElement | null {
+function findBestOption(
+  options: HTMLElement[],
+  targetValues: string[],
+  fieldType: FieldType,
+): HTMLElement | null {
   if (options.length === 0) return null;
 
   let best: HTMLElement | null = null;
@@ -90,6 +97,7 @@ function findBestOption(options: HTMLElement[], targetValues: string[]): HTMLEle
   }
 
   if (best && bestScore >= 0.35) return best;
+  if (isPlanningFieldType(fieldType)) return randomPick(options);
   return randomPick(options);
 }
 
@@ -126,13 +134,13 @@ export async function fillVueMultiselect(
 
   const searchInput = fillRoot.querySelector<HTMLInputElement>(".multiselect__input");
   const searchHint = targetValues.find((target) => target.length >= 3) ?? targetValues[0];
-  if (searchInput && searchHint) {
+  if (searchInput && searchHint && !isPlanningFieldType(fieldType)) {
     setInputValue(searchInput, searchHint.slice(0, 24));
     await delay(200);
   }
 
-  const options = await waitForOptions(fillRoot);
-  const option = findBestOption(options, targetValues);
+  const options = await waitForOptions(fillRoot, fieldType === "programMission" ? 20 : 12);
+  const option = findBestOption(options, targetValues, fieldType);
   if (!option) {
     fillRoot.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
     return false;

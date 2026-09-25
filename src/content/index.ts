@@ -4,6 +4,7 @@ import { MESSAGE_ACTIONS, WIZARD_MAX_STEPS } from "../shared/constants";
 import { delay } from "../shared/utils";
 import { countFillableElements, detectCheckboxes, detectFields, detectRadioGroups } from "./field-detector";
 import { fillForm } from "./field-filler";
+import type { FillScopeMode } from "./fill-scope";
 import { resolveFillRoot } from "./fill-scope";
 import { tryAdvanceToNextStep } from "./next-step";
 
@@ -35,11 +36,11 @@ async function runFillPasses(profile: IndonesianProfile, root: ParentNode): Prom
   return filled;
 }
 
-async function handleFillForm(): Promise<FillResult> {
+async function handleFillForm(scope: FillScopeMode = "auto"): Promise<FillResult> {
   const profile = generateProfile();
   lastProfile = profile;
 
-  const root = resolveFillRoot();
+  const root = resolveFillRoot(scope);
   let filled = 0;
   let total = 0;
   let wizardSteps = 0;
@@ -68,9 +69,17 @@ function handleGenerateProfile(): IndonesianProfile {
   return profile;
 }
 
+function fillScopeFromAction(action: string): FillScopeMode | null {
+  if (action === MESSAGE_ACTIONS.FILL_FORM_MODAL) return "modal";
+  if (action === MESSAGE_ACTIONS.FILL_FORM_MODULE) return "module";
+  if (action === MESSAGE_ACTIONS.FILL_FORM) return "auto";
+  return null;
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.action === MESSAGE_ACTIONS.FILL_FORM) {
-    handleFillForm()
+  const fillScope = fillScopeFromAction(message?.action);
+  if (fillScope) {
+    handleFillForm(fillScope)
       .then((result) => sendResponse({ success: true, ...result }))
       .catch((error: Error) => sendResponse({ success: false, error: error.message }));
     return true;
