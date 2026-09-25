@@ -3,7 +3,6 @@ import { GEO_FIELD_ORDER, SKIP_CHECKBOX_KEYWORDS } from "../shared/constants";
 import { isVisible, normalizeText } from "../shared/utils";
 import { getFieldContextText } from "./label-utils";
 import { matchFieldType } from "./semantic-matcher";
-
 const FIELD_SELECTOR = [
   "input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']):not([type='image']):not([type='file'])",
   "textarea",
@@ -20,11 +19,40 @@ function geoSortIndex(fieldType: FieldType): number {
   return index === -1 ? 99 : index;
 }
 
+function detectVueMultiselectFields(root: ParentNode): DetectedField[] {
+  const hosts = new Set<HTMLElement>();
+
+  for (const host of root.querySelectorAll<HTMLElement>("multiselect")) {
+    hosts.add(host);
+  }
+
+  for (const node of root.querySelectorAll<HTMLElement>(".multiselect")) {
+    if (node.closest("multiselect")) continue;
+    hosts.add(node);
+  }
+
+  const detected: DetectedField[] = [];
+  for (const host of hosts) {
+    if (!isVisible(host)) continue;
+    const fillRoot = host.tagName.toLowerCase() === "multiselect"
+      ? host.querySelector<HTMLElement>(".multiselect") ?? host
+      : host;
+    if (fillRoot.classList.contains("multiselect--disabled")) continue;
+
+    const { fieldType, score, signals } = matchFieldType(host);
+    detected.push({ element: host, signals, fieldType, score });
+  }
+
+  return detected;
+}
+
 export function detectFields(root: ParentNode = document): DetectedField[] {
   const elements = Array.from(root.querySelectorAll<HTMLElement>(FIELD_SELECTOR));
-  const detected: DetectedField[] = [];
+  const detected: DetectedField[] = detectVueMultiselectFields(root);
 
   for (const element of elements) {
+    if (element.closest("multiselect, .multiselect")) continue;
+
     if (element instanceof HTMLInputElement) {
       if (element.type === "radio" || element.type === "checkbox") continue;
     }

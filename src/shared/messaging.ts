@@ -1,5 +1,15 @@
-import contentScriptUrl from "../content/index.ts?script";
-import { delay } from "./utils";
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getContentScriptLoaderFile(): string {
+  const manifest = chrome.runtime.getManifest();
+  for (const entry of manifest.content_scripts ?? []) {
+    const script = entry.js?.[0];
+    if (script) return script;
+  }
+  throw new Error("Content script tidak ditemukan di manifest extension.");
+}
 
 function isRestrictedTabUrl(url: string | undefined): boolean {
   if (!url) return true;
@@ -45,7 +55,7 @@ async function injectContentScript(tabId: number): Promise<void> {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: [contentScriptUrl],
+      files: [getContentScriptLoaderFile()],
     });
   } catch {
     // Loader may already be present, or the tab blocks injection (PDF viewer, etc.).
@@ -64,6 +74,6 @@ export async function sendToActiveTab<T>(action: string): Promise<T> {
   if (afterInject) return afterInject;
 
   throw new Error(
-    "Gagal memuat script di halaman ini. Di chrome://extensions klik Reload pada extension, refresh tab form, lalu coba lagi. Pastikan folder yang di-load adalah hasil build (subfolder extension/).",
+    "Gagal memuat script. Di chrome://extensions klik Reload pada extension, lalu refresh (F5) tab form dan coba lagi.",
   );
 }

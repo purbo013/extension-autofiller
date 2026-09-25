@@ -2,7 +2,9 @@ import type { DetectedCheckbox, DetectedField, FieldType, IndonesianProfile } fr
 import { CASCADE_FILL_DELAY_MS, FIELD_FILL_DELAY_MS, GEO_FIELD_ORDER } from "../shared/constants";
 import { delay, fuzzyMatch, isVisible, normalizeText, randomInt, randomPick } from "../shared/utils";
 import { getFieldContextText } from "./label-utils";
+import { getSelectTargetValues } from "./select-utils";
 import { getProfileValue } from "./semantic-matcher";
+import { fillVueMultiselect, isVueMultiselectEmpty, isVueMultiselectHost } from "./vue-multiselect-filler";
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -118,13 +120,6 @@ function fillTextLike(
   setNativeValue(element, finalValue);
   dispatchInputEvents(element);
   return true;
-}
-
-function getSelectTargetValues(fieldType: FieldType, profile: IndonesianProfile, value: string): string[] {
-  if (fieldType === "gender") {
-    return GENDER_CANDIDATES[profile.gender];
-  }
-  return [value];
 }
 
 function fillSelect(element: HTMLSelectElement, value: string, fieldType: FieldType, profile: IndonesianProfile): boolean {
@@ -256,6 +251,10 @@ async function fillDetectedField(field: DetectedField, profile: IndonesianProfil
 
   const element = field.element;
 
+  if (isVueMultiselectHost(element)) {
+    return fillVueMultiselect(element, value, field.fieldType, profile);
+  }
+
   if (element instanceof HTMLSelectElement) {
     return fillSelect(element, value, field.fieldType, profile);
   }
@@ -277,6 +276,9 @@ function isGeoField(fieldType: FieldType): boolean {
 
 function isFieldEmpty(field: DetectedField): boolean {
   const element = field.element;
+  if (isVueMultiselectHost(element)) {
+    return isVueMultiselectEmpty(element);
+  }
   if (element instanceof HTMLSelectElement) {
     const selected = element.selectedOptions[0] ?? element.options[0];
     return !element.value || isPlaceholderOption(selected);

@@ -5,7 +5,7 @@ const LABEL_SELECTOR = "label, legend, .label, .form-label, .control-label, th";
 
 export function getElementSignals(element: HTMLElement): string[] {
   const signals: string[] = [];
-  const attrs = ["name", "id", "placeholder", "aria-label", "autocomplete", "data-field", "data-name", "title"];
+  const attrs = ["name", "id", "placeholder", "aria-label", "autocomplete", "data-field", "data-name", "title", "label"];
 
   for (const attr of attrs) {
     const value = element.getAttribute(attr);
@@ -18,6 +18,8 @@ export function getElementSignals(element: HTMLElement): string[] {
     signals.push("select");
   } else if (element instanceof HTMLTextAreaElement) {
     signals.push("textarea");
+  } else if (element.tagName.toLowerCase() === "multiselect" || element.classList.contains("multiselect")) {
+    signals.push("select", "multiselect");
   }
 
   const label = findLabelText(element);
@@ -135,6 +137,7 @@ export function inferFieldTypeFromAttributes(element: HTMLElement): FieldType | 
     element.getAttribute("placeholder"),
     element.getAttribute("data-field"),
     element.getAttribute("data-name"),
+    element.getAttribute("label"),
   ]
     .filter(Boolean)
     .map((value) => normalizeText(value as string));

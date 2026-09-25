@@ -353,6 +353,9 @@ function getInputType(element: HTMLElement): string {
   if (element instanceof HTMLInputElement) return element.type;
   if (element instanceof HTMLSelectElement) return "select";
   if (element instanceof HTMLTextAreaElement) return "textarea";
+  if (element.tagName.toLowerCase() === "multiselect" || element.classList.contains("multiselect")) {
+    return "select";
+  }
   return element.tagName.toLowerCase();
 }
 
@@ -443,7 +446,11 @@ export function matchFieldType(element: HTMLElement): { fieldType: FieldType; sc
     return { fieldType: labelType, score: 95, signals };
   }
 
-  let bestType: FieldType = element instanceof HTMLSelectElement ? "genericSelect" : "genericText";
+  const isSelectLike =
+    element instanceof HTMLSelectElement ||
+    element.tagName.toLowerCase() === "multiselect" ||
+    element.classList.contains("multiselect");
+  let bestType: FieldType = isSelectLike ? "genericSelect" : "genericText";
   let bestScore = 0;
 
   for (const rule of FIELD_RULES) {
@@ -455,7 +462,7 @@ export function matchFieldType(element: HTMLElement): { fieldType: FieldType; sc
   }
 
   if (bestScore === 0) {
-    if (element instanceof HTMLSelectElement) bestType = "genericSelect";
+    if (isSelectLike) bestType = "genericSelect";
     else if (element instanceof HTMLInputElement && element.type === "number") bestType = "genericNumber";
     else bestType = "genericText";
   }
