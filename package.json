@@ -1,11 +1,12 @@
 {
   "name": "form-autofiller-id",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node scripts/postbuild.mjs",
+    "build": "node scripts/bump-version-if-changed.mjs && tsc && vite build && node scripts/postbuild.mjs",
+    "version:sync": "node scripts/sync-version.mjs",
     "preview": "vite preview",
     "postinstall": "node scripts/generate-icons.mjs"
   },

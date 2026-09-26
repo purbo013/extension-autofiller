@@ -84,4 +84,6 @@ verifyExtensionBundle();
 writeFileSync(join(extensionDir, "LOAD_THIS_FOLDER.txt"), extensionMessage, "utf8");
 writeFileSync(join(rootDir, "INSTALL.txt"), rootMessage, "utf8");
 
+const builtVersion = manifest.version;
+console.log(`\nBuild OK — manifest v${builtVersion}\n`);
 console.log("\n" + rootMessage + "\n");

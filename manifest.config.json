@@ -1,10 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Form Autofiller ID",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Isi form dengan data fake Indonesia yang realistis",
-  "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "action": {
     "default_popup": "src/popup/index.html",
     "default_title": "Form Autofiller ID",
@@ -25,8 +31,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["src/content/index.ts"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "src/content/index.ts"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -40,8 +50,12 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["assets/*"],
-      "matches": ["<all_urls>"],
+      "resources": [
+        "assets/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ],
       "use_dynamic_url": false
     }
   ]
